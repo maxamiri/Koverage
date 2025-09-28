@@ -1,16 +1,8 @@
 # Koverage
 
-**Koverage** is a Kotlin-based simulator for modelling and evaluating network coverage in industrial environments using mobile sinks, such as service vehicles, autonomous ground vehicles or aerial drones.
+**Koverage** is a Kotlin-based simulator for modelling and evaluating **network coverage** in industrial environments using **mobile sinks**, such as service vehicles, autonomous ground vehicles, or aerial drones.  
 
 It supports a modular architecture to simulate various mobility behaviours and analyse wireless sensor network (WSN) coverage over time.
-
----
-
-## 🚧 Project Status
-
-This repository currently serves as a placeholder.
-
-🔒 The full source code will be published here after the acceptance of the accompanying research paper. It will include complete Kotlin-based modules, sample scenarios, and logs.
 
 ---
 
@@ -18,14 +10,13 @@ This repository currently serves as a placeholder.
 
 Koverage currently supports three mobility models:
 
-- **Random Waypoint** [Bettstetter, 2001]
-- **Random Direction** [Royer, 2001]
-- **Specialised Synthetic Model** [Amiri et al., 2024] 
+- **Random Waypoint** [Bettstetter, 2001]  
+- **Random Direction** [Royer, 2001]  
+- **Specialised Synthetic Model** [Amiri et al., 2024]  
 
-📌 The source code for the *Specialised Synthetic Model* is included and was developed by the same team.
-*Specialised Synthetic Model* is a custom mobility model based on real-world trace data, designed to reflect structured vehicular motion in constrained environments such as industrial yards or logistics zones.
+📌 The *Specialised Synthetic Model* is a custom mobility model based on real-world trace data, designed to reflect structured vehicular motion in constrained environments such as industrial yards or logistics zones.
 
-This model was presented at the 2024 International Telecommunication Networks and Applications Conference (ITNAC):
+This model was presented at the **2024 International Telecommunication Networks and Applications Conference (ITNAC):**
 
 ```bibtex
 @INPROCEEDINGS{10815387,
@@ -38,16 +29,39 @@ This model was presented at the 2024 International Telecommunication Networks an
 }
 ```
 
-## 📄 Citation (To Be Added)
+---
 
-Once the paper is published, a BibTeX citation entry will be added here for referencing the research.
+## 🎓 Research Context
+
+Koverage has been developed as part of ongoing PhD research by **Max Amiri**.  
+It complements the **NTL – Network Time Link** prototype by providing coverage evaluation and simulation insights for mobility-assisted IoT communication.
+
+The concept has been published and can be cited as:
+
+> **Energy-Efficient Communication and Localisation Protocol for Industrial IoT Devices**  
+> Max Amiri, David Eyers, and Morteza Biglari-Abhari  
+> In *Proceedings of the 9th IEEE International Conference on Smart Internet of Things (SmartIoT 2025)*,  
+> 17–20 November 2025, Sydney, Australia.
+
+### 📑 BibTeX Citation
+
+```bibtex
+@inproceedings{Amiri2025NTL,
+  title={Energy-Efficient Communication and Localisation Protocol for Industrial IoT Devices},
+  author={Amiri, Max and Eyers, David and Biglari-Abhari, Morteza},
+  booktitle={Proceedings of the 9th IEEE International Conference on Smart Internet of Things (SmartIoT)},
+  year={2025},
+  month={November},
+  address={Sydney, Australia}
+}
+```
 
 ---
 
 ## 📬 Contact
 
-For questions or collaboration opportunities, feel free to open an issue or reach out once the repository is fully open.
+For collaboration opportunities, please reach out to **Max Amiri**.
 
 ---
 
-> Made with Kotlin. Designed for research.
+> Made with Kotlin. Built for industrial IoT research.

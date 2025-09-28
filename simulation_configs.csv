@@ -1,0 +1,4 @@
+# Example config as carCount, area.x, area.y, duration, radius, mobility (RandomWaypoint|Enterprise|RandomDirection), minSpeed, maxSpeed, waitTime, seed, history, logFile
+5,5000,5000,600,50,RandomWaypoint,5,15,0,42,-1,
+6,5000,5000,600,100,RandomWaypoint,5,15,0,42,-1,
+7,5000,5000,600,100,RandomWaypoint,5,15,0,42,-1,
