@@ -7,6 +7,23 @@ import kotlin.math.cos
 import kotlin.math.sin
 import kotlin.random.Random
 
+/**
+ * Random Direction mobility model implementation.
+ *
+ * In this model, a mobile node travels in a randomly chosen direction at a randomly
+ * chosen speed until it reaches a boundary of the simulation area. Upon reaching
+ * a boundary, it pauses for a random wait time, then selects a new random direction
+ * and speed and continues.
+ *
+ * This implements the Random Direction model from:
+ * Royer, E. M., Melliar-Smith, P. M., & Moser, L. E. (2001).
+ *
+ * @property area The simulation area boundaries.
+ * @property tripMinSpeed Minimum travel speed in meters per second.
+ * @property tripMaxSpeed Maximum travel speed in meters per second.
+ * @property maxWaitTime Maximum duration to pause at boundaries in seconds.
+ * @property random Random number generator for direction and speed selection.
+ */
 class RandomDirection(
     area: Area,
     private val tripMinSpeed: Double,
@@ -19,6 +36,16 @@ class RandomDirection(
     private var speed = tripMinSpeed + random.nextDouble() * (tripMaxSpeed - tripMinSpeed)
     private var currentWaitTime = 0
 
+    /**
+     * Moves the car one time step according to the Random Direction model.
+     *
+     * The car either:
+     * - Waits if currently pausing at a boundary
+     * - Continues moving in its current direction
+     * - Handles boundary collision by stopping and selecting a new direction
+     *
+     * @param car The car to move.
+     */
     override fun move(car: Car) {
         if (currentWaitTime > 0) {
             currentWaitTime -= 1
@@ -39,6 +66,14 @@ class RandomDirection(
         }
     }
 
+    /**
+     * Handles the event when a car reaches the simulation area boundary.
+     *
+     * The car's position is clamped to the boundary, a random wait time is selected,
+     * and a new random direction and speed are chosen for the next movement phase.
+     *
+     * @param car The car that reached the boundary.
+     */
     private fun handleBoundaryHit(car: Car) {
         // Stop at boundary
         car.position.x = car.position.x.coerceIn(0.0, area.width.toDouble())

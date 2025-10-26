@@ -8,23 +8,64 @@ import kotlin.random.Random
 import kotlinx.coroutines.*
 import java.util.concurrent.Executors
 
-// Define a Point class to represent x and y coordinates
+/**
+ * Represents a 2D point in the simulation space.
+ *
+ * @property x The x-coordinate of the point (mutable).
+ * @property y The y-coordinate of the point (mutable).
+ */
 data class Point(var x: Double, var y: Double)
 
-// Define an Area class with width and height
+/**
+ * Represents a rectangular simulation area.
+ *
+ * @property width The width of the area in meters.
+ * @property height The height of the area in meters.
+ */
 data class Area(val width: Int, val height: Int) {
+    /**
+     * The total area in square meters.
+     */
     val totalArea: Double
         get() = width * height.toDouble()
 }
 
-// Define a Car class with its current position and mobility model
+/**
+ * Represents a mobile sink (vehicle, AGV, or drone) in the simulation.
+ *
+ * A car moves through the simulation area according to its assigned mobility model,
+ * providing network coverage within its communication radius.
+ *
+ * @property id Unique identifier for this car.
+ * @property position Current position of the car in the simulation area.
+ * @property mobilityModel The mobility model governing this car's movement.
+ */
 class Car(val id: Int, var position: Point, var mobilityModel: MobilityModel) {
+    /**
+     * Moves the car according to its mobility model.
+     *
+     * This method delegates movement to the assigned [mobilityModel].
+     */
     fun move() {
         mobilityModel.move(this)
     }
 }
 
-// Data class to hold configuration for each simulation
+/**
+ * Configuration parameters for a single simulation run.
+ *
+ * @property carCount Number of mobile sinks (cars) in the simulation.
+ * @property area The simulation area dimensions.
+ * @property duration Duration of the simulation in time steps (seconds).
+ * @property radius Communication radius of each mobile sink in meters.
+ * @property mobilityModelType Type of mobility model to use ("RandomWaypoint", "RandomDirection", or "Enterprise").
+ * @property tripMinSpeed Minimum speed in meters per second.
+ * @property tripMaxSpeed Maximum speed in meters per second.
+ * @property waitTime Wait time in seconds after reaching a destination or boundary.
+ * @property seed Random seed for reproducible simulations.
+ * @property history Number of time steps to track for coverage history (-1 for no history tracking).
+ * @property logFile Path to save position log file (empty string to disable logging).
+ */
 data class SimulationConfig(
     val carCount: Int,
     val area: Area,
@@ -39,7 +80,14 @@ data class SimulationConfig(
     val logFile: String
 )
 
-// Simulator class
+/**
+ * Main simulation engine for network coverage evaluation.
+ *
+ * The Simulator manages the movement of mobile sinks and tracks the area coverage
+ * over time. It supports various mobility models and can optionally log position data.
+ *
+ * @property config The configuration parameters for this simulation.
+ */
 class Simulator(private val config: SimulationConfig) {
     private val cars = mutableListOf<Car>()
     private val coverage = if (config.history>0) {
@@ -85,6 +133,16 @@ class Simulator(private val config: SimulationConfig) {
         }
     }
 
+    /**
+     * Executes the simulation for the configured duration.
+     *
+     * This method moves all cars at each time step, tracks coverage, and optionally
+     * logs position data to a file.
+     *
+     * @return The coverage percentage. If history tracking is enabled, returns the
+     *         average coverage percentage across the history window. Otherwise,
+     *         returns the total coverage percentage at the end of simulation.
+     */
     fun run(): Double {
         val coveragePercentage:MutableList<Double> = mutableListOf()
         var logging = false
@@ -129,11 +187,32 @@ class Simulator(private val config: SimulationConfig) {
     }
 }
 
-// Class to load configurations, run simulations, and save results
+/**
+ * Manages loading, execution, and result collection for multiple simulations.
+ *
+ * The SimulationRunner reads simulation configurations from a CSV file, executes
+ * them in parallel using coroutines, and saves the aggregated results to a file.
+ * Each configuration is run multiple times with different random seeds to obtain
+ * statistically significant coverage metrics.
+ *
+ * @property configFile Path to the CSV file containing simulation configurations.
+ * @property resultFile Path where simulation results will be saved.
+ */
 class SimulationRunner(configFile: String, resultFile: String) {
     private val configs = loadConfigs(configFile)
     private val resultFile = File(resultFile)
 
+    /**
+     * Loads simulation configurations from a CSV file.
+     *
+     * The CSV file should have the following format (without headers):
+     * carCount, area.x, area.y, duration, radius, mobility, minSpeed, maxSpeed, waitTime, seed, history, logFile
+     *
+     * Lines starting with '#' are treated as comments and ignored.
+     *
+     * @param configFile Path to the CSV configuration file.
+     * @return List of parsed [SimulationConfig] objects.
+     */
     private fun loadConfigs(configFile: String): List<SimulationConfig> {
         return File(configFile)
             .readLines()
@@ -157,6 +236,14 @@ class SimulationRunner(configFile: String, resultFile: String) {
     }
 
 
+    /**
+     * Executes all configured simulations in parallel.
+     *
+     * Each configuration is run 1000 times with incrementing random seeds to compute
+     * an average coverage percentage. Simulations are executed concurrently using
+     * a thread pool of up to 12 threads. Results are written to the result file with
+     * the format: mobilityModel, finalSeed, carCount, radius, logFile, avgCoverage
+     */
     fun runAllSimulations() {
         val dispatcher = Executors.newFixedThreadPool(12).asCoroutineDispatcher() // Up to 12 parallel simulations
         runBlocking(dispatcher) {
@@ -191,7 +278,12 @@ class SimulationRunner(configFile: String, resultFile: String) {
     }
 }
 
-// Main function to run simulations from configurations
+/**
+ * Entry point for the Koverage simulation application.
+ *
+ * Loads configurations from 'simulation_configs.csv', executes all simulations,
+ * and saves results to 'simulation_results.csv'.
+ */
 fun main() {
     val configFile = "simulation_configs.csv"
     val resultFile = "simulation_results.csv"

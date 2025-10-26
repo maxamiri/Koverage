@@ -6,7 +6,28 @@ package io.github.maxamiri
 import kotlin.math.*
 import kotlin.random.Random
 
-// Enterprise mobility model implementation with speed and wait time
+/**
+ * Specialized Synthetic Mobility Model based on real-world trace data.
+ *
+ * This mobility model is designed to reflect structured vehicular motion in constrained
+ * environments such as industrial yards or logistics zones. It uses exponential
+ * distributions parameterized from real-world GPS traces to generate realistic
+ * speed and direction changes.
+ *
+ * The model updates speed and direction every 5 seconds based on probability
+ * distributions that depend on the current speed class. This implements the
+ * Enterprise/Synthetic model presented in:
+ *
+ * Amiri, M., Eyers, D., & Huang, Z. (2024). A Specialised Synthetic Mobility Model
+ * Based on Real-World Traces. In 2024 34th International Telecommunication Networks
+ * and Applications Conference (ITNAC) (pp. 1-5). IEEE.
+ *
+ * @property area The simulation area boundaries.
+ * @property tripMinSpeed Minimum travel speed in meters per second.
+ * @property tripMaxSpeed Maximum travel speed in meters per second.
+ * @property waitTime Duration to pause (currently unused in this implementation).
+ * @property random Random number generator for stochastic decisions.
+ */
 class Enterprise(
     area: Area,
     private val tripMinSpeed: Double,
@@ -15,6 +36,18 @@ class Enterprise(
     random: Random
 ) : MobilityModel(area, random) {
 
+    /**
+     * Parameters for an exponential probability distribution class.
+     *
+     * Each speed class (e.g., 0-20 km/h, 20-40 km/h) has its own exponential
+     * distribution parameters derived from real-world trace data.
+     *
+     * @property min Minimum value of the speed class in km/h.
+     * @property max Maximum value of the speed class in km/h.
+     * @property range Valid output values for this distribution.
+     * @property a Exponential distribution parameter (amplitude).
+     * @property b Exponential distribution parameter (decay rate).
+     */
     data class ClassParams(
         val min: Int,
         val max: Int,
@@ -22,7 +55,14 @@ class Enterprise(
         val a: Double,
         val b: Double
     ) {
+        /**
+         * Normalized probability values for each element in [range].
+         */
         val probabilities: List<Double>
+
+        /**
+         * Normalization constant for the exponential distribution.
+         */
         var normalise:Double
 
         init {
@@ -30,6 +70,14 @@ class Enterprise(
             probabilities = range.map { x -> exponential(a, b, x.toDouble()) / normalise }
         }
 
+        /**
+         * Computes the exponential distribution function: a * exp(-b * x).
+         *
+         * @param a Amplitude parameter.
+         * @param b Decay rate parameter.
+         * @param x Input value.
+         * @return The exponential function value.
+         */
         private fun exponential(a: Double, b: Double, x: Double): Double {
             return a * exp(-b * x)
         }
@@ -44,6 +92,16 @@ class Enterprise(
     private var previousSpeedSign = 0
     private var previousDirectionSign = 0
 
+    /**
+     * Moves the car one time step according to the Enterprise mobility model.
+     *
+     * On the first call, initializes random speed and direction. Subsequently,
+     * updates position continuously and recalculates speed/direction every 5 seconds
+     * based on exponential probability distributions. Handles boundary conditions
+     * by reflecting the car back into the simulation area.
+     *
+     * @param car The car to move.
+     */
     override fun move(car: Car) {
         if (firstRun) {
             // Generate a random initial speed and direction
@@ -119,14 +177,26 @@ class Enterprise(
         }
     }
 
-    // Helper to calculate speed components (x and y)
+    /**
+     * Calculates the x and y velocity components from speed and direction.
+     *
+     * Converts polar coordinates (speed and direction) to Cartesian velocity components.
+     */
     private fun calculateSpeedComponents() {
         val radians = Math.toRadians(direction.toDouble())
         speedX = speed * cos(radians)
         speedY = speed * sin(radians)
     }
 
-    // Implementation of generateNewSpeed and generateNewDirection
+    /**
+     * Generates a new speed change value based on the current speed.
+     *
+     * Uses the speed-dependent exponential distribution to determine the magnitude
+     * of speed change (in m/s).
+     *
+     * @param previousSpeed The current speed in meters per second.
+     * @return The speed change magnitude in meters per second.
+     */
     private fun generateNewSpeed(previousSpeed: Int): Int {
         // Generate new speed and direction
         val newSpeed = kmh2mps(generateValue(mps2kmh(previousSpeed), speedParams))
@@ -134,19 +204,45 @@ class Enterprise(
         return newSpeed
     }
 
+    /**
+     * Generates a new direction change value based on the current speed.
+     *
+     * Uses the speed-dependent exponential distribution to determine the magnitude
+     * of direction change (in degrees).
+     *
+     * @param previousSpeed The current speed in meters per second.
+     * @return The direction change magnitude in degrees.
+     */
     private fun generateNewDirection(previousSpeed: Int): Int {
         val newDirection = generateValue(mps2kmh(previousSpeed), directionParams)
         // println("Previous speed: $previousSpeed, change direction: $newDirection")
         return newDirection
     }
 
+    /**
+     * Converts kilometers per hour to meters per second.
+     *
+     * @param x Speed in km/h.
+     * @return Speed in m/s.
+     */
     private fun kmh2mps(x:Int) =
         (x/3.6).toInt()
 
+    /**
+     * Converts meters per second to kilometers per hour.
+     *
+     * @param x Speed in m/s.
+     * @return Speed in km/h.
+     */
     private fun mps2kmh(x:Int) =
         (x*3.6).toInt()
 
-    // Speed ClassParams
+    /**
+     * Speed change distribution parameters for different speed classes.
+     *
+     * Each entry defines the exponential distribution parameters for a specific
+     * speed range (in km/h). Parameters are derived from real-world trace analysis.
+     */
     val speedParams = listOf(
         ClassParams(0, 20, (0..80).toList(), 0.7186, 0.0999),
         ClassParams(20, 40, (0..80).toList(), 0.7443, 0.0999),
@@ -154,7 +250,12 @@ class Enterprise(
         ClassParams(60, 100, (0..80).toList(), 0.5937, 0.0999)
     )
 
-    // Direction ClassParams
+    /**
+     * Direction change distribution parameters for different speed classes.
+     *
+     * Each entry defines the exponential distribution parameters for a specific
+     * speed range (in km/h). Parameters are derived from real-world trace analysis.
+     */
     val directionParams = listOf(
         ClassParams(0, 20, (0..180).toList(), 0.3679, 0.0647),
         ClassParams(20, 40, (0..180).toList(), 0.5312, 0.0982),
@@ -162,6 +263,17 @@ class Enterprise(
         ClassParams(60, 100, (0..180).toList(), 0.7830, 0.0999)
     )
 
+    /**
+     * Generates a random value from the appropriate exponential distribution.
+     *
+     * Selects the appropriate [ClassParams] based on the input value, then samples
+     * from the corresponding probability distribution using inverse transform sampling.
+     *
+     * @param x The current value (speed in km/h) used to select the distribution class.
+     * @param classParamsList List of distribution parameters for different classes.
+     * @return A randomly sampled value from the selected distribution.
+     * @throws IllegalStateException if no matching class parameters are found.
+     */
     fun generateValue(x: Int, classParamsList: List<ClassParams>): Int {
         // Find the matching ClassParams
         val selectedClassParams = classParamsList.find { x in it.min until it.max }
@@ -183,3 +295,4 @@ class Enterprise(
         return selectedClassParams.range[selectedIndex]
     }
 }
+

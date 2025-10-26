@@ -5,7 +5,17 @@ package io.github.maxamiri
 
 import kotlin.math.exp
 
-// Function to get the direction model parameters
+/**
+ * Retrieves the exponential distribution parameters for direction changes.
+ *
+ * Returns the (a, b) parameters for the exponential distribution based on the
+ * current speed class. These parameters are derived from real-world trace analysis
+ * for the Enterprise mobility model.
+ *
+ * @param speed Current speed in km/h.
+ * @return Pair of (a, b) parameters for the exponential distribution.
+ * @throws IllegalArgumentException if the speed is outside valid ranges.
+ */
 fun getDirectionModelParams(speed: Double): Pair<Double, Double> {
     return when {
         speed > 0 && speed < 20 -> Pair(0.3679, 0.0647)
@@ -16,7 +26,17 @@ fun getDirectionModelParams(speed: Double): Pair<Double, Double> {
     }
 }
 
-// Function to get the speed model parameters
+/**
+ * Retrieves the exponential distribution parameters for speed changes.
+ *
+ * Returns the (a, b) parameters for the exponential distribution based on the
+ * current speed class. These parameters are derived from real-world trace analysis
+ * for the Enterprise mobility model.
+ *
+ * @param speed Current speed in km/h.
+ * @return Pair of (a, b) parameters for the exponential distribution.
+ * @throws IllegalArgumentException if the speed is outside valid ranges.
+ */
 fun getSpeedModelParams(speed: Double): Pair<Double, Double> {
     return when {
         speed > 0 && speed < 20 -> Pair(0.7186, 0.0999)
@@ -27,23 +47,57 @@ fun getSpeedModelParams(speed: Double): Pair<Double, Double> {
     }
 }
 
-// Function to compute the exponential model
+/**
+ * Computes the value of an exponential distribution function.
+ *
+ * Calculates: f(x) = a * exp(-b * x)
+ *
+ * @param a Amplitude parameter of the exponential distribution.
+ * @param b Decay rate parameter of the exponential distribution.
+ * @param x Input value.
+ * @return The exponential function value at x.
+ */
 fun computeExponentialModel(a: Double, b: Double, x: Double): Double {
     return a * exp(-b * x)
 }
 
-// Function to normalise a direction
+/**
+ * Computes the normalization constant for direction change distributions.
+ *
+ * Sums the exponential distribution values over the valid direction change
+ * range (0-180 degrees) to obtain the normalization constant.
+ *
+ * @param a Amplitude parameter of the exponential distribution.
+ * @param b Decay rate parameter of the exponential distribution.
+ * @return The normalization constant (sum of distribution values).
+ */
 fun normaliseDirection(a: Double, b: Double): Double {
     val fxSum = (0..180).sumOf { x -> computeExponentialModel(a, b, x.toDouble()) }
     return fxSum
 }
 
-// Function to normalise speed
+/**
+ * Computes the normalization constant for speed change distributions.
+ *
+ * Sums the exponential distribution values over the valid speed change
+ * range (0-80 km/h) to obtain the normalization constant.
+ *
+ * @param a Amplitude parameter of the exponential distribution.
+ * @param b Decay rate parameter of the exponential distribution.
+ * @return The normalization constant (sum of distribution values).
+ */
 fun normaliseSpeed(a: Double, b: Double): Double {
     val fxSum = (0..80).sumOf { x -> computeExponentialModel(a, b, x.toDouble()) }
     return fxSum
 }
 
+/**
+ * Utility function to compute and display normalization constants.
+ *
+ * This main function calculates and prints the normalization constants for
+ * both direction and speed distributions across all speed classes. It's used
+ * for validating the Enterprise mobility model parameters.
+ */
 fun main() {
     // Define representative speeds for each class
     val speeds = listOf(1.0, 20.0, 40.0, 60.0)
@@ -66,3 +120,4 @@ fun main() {
         println("For speed $speed: a = $a, b = $b, N = $normalisedValue")
     }
 }
+

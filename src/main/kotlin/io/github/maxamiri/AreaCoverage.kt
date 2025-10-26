@@ -6,11 +6,34 @@ package io.github.maxamiri
 import kotlin.math.pow
 import kotlin.math.sqrt
 
+/**
+ * Tracks and computes network coverage over a simulation area with temporal history.
+ *
+ * This class maintains a grid representation of the simulation area and tracks which
+ * cells have been covered by mobile sinks over time. It supports both instantaneous
+ * and historical coverage metrics, with the ability to track coverage over a sliding
+ * time window.
+ *
+ * Coverage is determined by a circular communication radius around each mobile sink's
+ * position. The class uses a precomputed disk pattern for efficient coverage updates.
+ *
+ * @property x Width of the simulation area in meters.
+ * @property y Height of the simulation area in meters.
+ * @property radius Communication radius of mobile sinks in meters.
+ * @property history Number of time steps to track in the history window (1 for no history).
+ */
 class AreaCoverage(private val x: Int, private val y: Int, private val radius: Int, private val history: Int) {
     private val coverageHistory: Array<Array<BooleanArray>> = Array(history) { Array(x) { BooleanArray(y) } }
     private val disk: Array<BooleanArray> = precomputeDisk()
 
-    // Precompute a square disk with the circle's shape inside
+    /**
+     * Precomputes a circular disk pattern for efficient coverage marking.
+     *
+     * Creates a square grid containing a circular pattern based on the communication
+     * radius. This pattern is reused for each coverage update operation.
+     *
+     * @return A 2D boolean array representing the circular coverage pattern.
+     */
     private fun precomputeDisk(): Array<BooleanArray> {
         val size = 2 * radius + 1 // Size of the square
         val disk = Array(size) { BooleanArray(size) }
@@ -25,7 +48,17 @@ class AreaCoverage(private val x: Int, private val y: Int, private val radius: I
         return disk
     }
 
-    // Method to set members inside the circle with radius R around (cx, cy) to true for a specific time
+    /**
+     * Marks the area around a point as covered at a specific time.
+     *
+     * Updates the coverage grid by marking all cells within the communication radius
+     * of the specified point as covered. If the time has advanced to a new history
+     * slot, the slot is cleared before marking new coverage.
+     *
+     * @param cx X-coordinate of the mobile sink's center position.
+     * @param cy Y-coordinate of the mobile sink's center position.
+     * @param time Current simulation time step.
+     */
     private var previousCoverageIndex = -1
     fun point(cx: Int, cy: Int, time: Int) {
         // Determine the current coverage based on time
@@ -59,12 +92,26 @@ class AreaCoverage(private val x: Int, private val y: Int, private val radius: I
         }
     }
 
-    // Get the value from a specific time copy
+    /**
+     * Retrieves the coverage status of a specific cell at a given time.
+     *
+     * @param x X-coordinate of the cell.
+     * @param y Y-coordinate of the cell.
+     * @param time Time step to query.
+     * @return True if the cell was covered at the specified time, false otherwise.
+     */
     fun getValue(x: Int, y: Int, time: Int): Boolean {
         return coverageHistory[time % history][x][y]
     }
 
-    // Print a specific time copy of the grid for debugging
+    /**
+     * Prints the coverage grid for a specific time step (for debugging).
+     *
+     * Outputs a grid representation where '1' indicates covered cells and '0'
+     * indicates uncovered cells.
+     *
+     * @param time The time step to print.
+     */
     fun printCoverage(time: Int) {
         val currentCoverage = coverageHistory[time % history]
         currentCoverage.forEach { row ->
@@ -72,7 +119,15 @@ class AreaCoverage(private val x: Int, private val y: Int, private val radius: I
         }
     }
 
-    // Compute the percentage of members set to true for a specific time
+    /**
+     * Computes the coverage percentage for a specific time step.
+     *
+     * Calculates what percentage of the total simulation area was covered at
+     * the specified time.
+     *
+     * @param time The time step to analyze.
+     * @return Coverage percentage (0-100).
+     */
     fun coveragePercentage(time: Int): Double {
         val currentCoverage = coverageHistory[time % history]
         var trueCount = 0
@@ -86,7 +141,15 @@ class AreaCoverage(private val x: Int, private val y: Int, private val radius: I
         return (trueCount.toDouble() / (x * y)) * 100
     }
 
-    // Compute the average coverage percentage across all history copies
+    /**
+     * Computes the coverage percentage across the entire history window.
+     *
+     * Calculates what percentage of the simulation area was covered at least once
+     * during any time step in the history window. This provides a measure of
+     * cumulative coverage over time.
+     *
+     * @return Cumulative coverage percentage (0-100) across all history slots.
+     */
     fun coveragePercentageHistory(): Double {
         var trueCount = 0
         for (i in 0 until x) {
@@ -104,3 +167,4 @@ class AreaCoverage(private val x: Int, private val y: Int, private val radius: I
         return (trueCount.toDouble() / (x * y)) * 100
     }
 }
+
