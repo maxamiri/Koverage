@@ -1,5 +1,6 @@
 plugins {
     kotlin("jvm") version "2.1.20"
+    id("org.jlleitschuh.gradle.ktlint") version "11.6.0"
 }
 
 group = "maxamiri.github.io"
@@ -19,4 +20,12 @@ tasks.test {
 }
 kotlin {
     jvmToolchain(21)
+}
+
+// ktlint plugin configuration
+ktlint {
+    version.set("0.49.1")
+    verbose.set(true)
+    android.set(false)
+    ignoreFailures.set(false)
 }

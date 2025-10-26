@@ -3,10 +3,13 @@
 
 package io.github.maxamiri
 
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.runBlocking
 import java.io.File
-import kotlin.random.Random
-import kotlinx.coroutines.*
 import java.util.concurrent.Executors
+import kotlin.random.Random
 
 /**
  * Represents a 2D point in the simulation space.
@@ -77,7 +80,7 @@ data class SimulationConfig(
     val waitTime: Int,
     var seed: Long,
     val history: Int,
-    val logFile: String
+    val logFile: String,
 )
 
 /**
@@ -90,10 +93,9 @@ data class SimulationConfig(
  */
 class Simulator(private val config: SimulationConfig) {
     private val cars = mutableListOf<Car>()
-    private val coverage = if (config.history>0) {
+    private val coverage = if (config.history > 0) {
         AreaCoverage(config.area.width, config.area.height, config.radius.toInt(), config.history)
-    }
-    else {
+    } else {
         AreaCoverage(config.area.width, config.area.height, config.radius.toInt(), 1)
     }
     private val random = Random(config.seed) // One Random instance per simulation
@@ -102,7 +104,7 @@ class Simulator(private val config: SimulationConfig) {
         repeat(config.carCount) { i ->
             val initialPosition = Point(
                 random.nextDouble(config.area.width.toDouble()),
-                random.nextDouble(config.area.height.toDouble())
+                random.nextDouble(config.area.height.toDouble()),
             )
             // println("Car $i @ initialPosition: ${initialPosition.x}, ${initialPosition.y}")
             val mobilityModel = when (config.mobilityModelType) {
@@ -111,21 +113,21 @@ class Simulator(private val config: SimulationConfig) {
                     config.tripMinSpeed,
                     config.tripMaxSpeed,
                     config.waitTime,
-                    random // Pass simulation's random instance
+                    random, // Pass simulation's random instance
                 )
                 "RandomDirection" -> RandomDirection(
                     config.area,
                     config.tripMinSpeed,
                     config.tripMaxSpeed,
                     config.waitTime,
-                    random // Pass simulation's random instance
+                    random, // Pass simulation's random instance
                 )
                 "Enterprise" -> Enterprise(
                     config.area,
                     config.tripMinSpeed,
                     config.tripMaxSpeed,
                     config.waitTime,
-                    random // Pass simulation's random instance
+                    random, // Pass simulation's random instance
                 )
                 else -> throw IllegalArgumentException("Unsupported mobility model")
             }
@@ -144,27 +146,26 @@ class Simulator(private val config: SimulationConfig) {
      *         returns the total coverage percentage at the end of simulation.
      */
     fun run(): Double {
-        val coveragePercentage:MutableList<Double> = mutableListOf()
+        val coveragePercentage: MutableList<Double> = mutableListOf()
         var logging = false
         var logBuffer = ""
-        if (config.logFile != "" ){
+        if (config.logFile != "") {
             logging = true
         }
 
         for (time in 0 until config.duration) {
             cars.forEach {
                 it.move()
-                if(config.history>0) {
-                    coverage.point(it.position.x.toInt(),it.position.y.toInt(),time)
-                }
-                else {
-                    coverage.point(it.position.x.toInt(),it.position.y.toInt(),0)
+                if (config.history > 0) {
+                    coverage.point(it.position.x.toInt(), it.position.y.toInt(), time)
+                } else {
+                    coverage.point(it.position.x.toInt(), it.position.y.toInt(), 0)
                 }
                 if (logging) {
                     logBuffer += "${it.id},$time,${it.position.x},${it.position.y}\n"
                 }
             }
-            if (config.history in 1..time){
+            if (config.history in 1..time) {
                 coveragePercentage.add(coverage.coveragePercentageHistory())
                 // println("Coverage:"  + coveragePercentage.joinToString())
             }
@@ -178,12 +179,11 @@ class Simulator(private val config: SimulationConfig) {
         }
 
         cars.clear()
-        return if (config.history>0){
+        return if (config.history > 0) {
             coveragePercentage.average()
-        } else{
+        } else {
             coverage.coveragePercentageHistory()
         }
-
     }
 }
 
@@ -230,11 +230,10 @@ class SimulationRunner(configFile: String, resultFile: String) {
                     waitTime = parts[8].toInt(),
                     seed = parts[9].toLong(),
                     history = parts[10].toInt(),
-                    logFile = parts[11]
+                    logFile = parts[11],
                 )
             }
     }
-
 
     /**
      * Executes all configured simulations in parallel.
@@ -251,7 +250,6 @@ class SimulationRunner(configFile: String, resultFile: String) {
             configs.map { config ->
                 async {
                     try {
-
                         val counter = 1000
                         var coveragePercentage = 0.0
                         for (i in 0 until counter) {
@@ -260,11 +258,18 @@ class SimulationRunner(configFile: String, resultFile: String) {
                             coveragePercentage += simulator.run()
                         }
 
-                        results += "${config.mobilityModelType},${config.seed},${config.carCount},${config.radius},${config.logFile},${
-                            "%.2f".format(coveragePercentage/counter)
-                        }\n"
+                        val avg = "%.2f".format(coveragePercentage / counter)
+                        results += listOf(
+                            config.mobilityModelType,
+                            config.seed.toString(),
+                            config.carCount.toString(),
+                            config.radius.toString(),
+                            config.logFile,
+                            avg,
+                        ).joinToString(",") + "\n"
                     } catch (e: Exception) {
-                        println("ERROR: Simulation failed for ${config.mobilityModelType},${config.seed},${config.carCount},${config.radius}. Error: ${e.message}")
+                        println("ERROR: Simulation failed for ${config.mobilityModelType}, ${config.seed}.")
+                        println("Details: carCount=${config.carCount}, radius=${config.radius}, error=${e.message}")
                     }
                 }
             }.awaitAll()

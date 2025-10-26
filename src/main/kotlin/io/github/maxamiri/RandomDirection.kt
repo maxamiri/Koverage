@@ -15,8 +15,7 @@ import kotlin.random.Random
  * a boundary, it pauses for a random wait time, then selects a new random direction
  * and speed and continues.
  *
- * This implements the Random Direction model from:
- * Royer, E. M., Melliar-Smith, P. M., & Moser, L. E. (2001).
+ * This implements the Random Direction model.
  *
  * @property area The simulation area boundaries.
  * @property tripMinSpeed Minimum travel speed in meters per second.
@@ -29,7 +28,7 @@ class RandomDirection(
     private val tripMinSpeed: Double,
     private val tripMaxSpeed: Double,
     private val maxWaitTime: Int, // Maximum wait time
-    random: Random
+    random: Random,
 ) : MobilityModel(area, random) {
 
     private var angle = random.nextDouble(0.0, 360.0)

@@ -120,4 +120,3 @@ fun main() {
         println("For speed $speed: a = $a, b = $b, N = $normalisedValue")
     }
 }
-

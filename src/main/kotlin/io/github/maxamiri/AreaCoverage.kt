@@ -3,9 +3,6 @@
 
 package io.github.maxamiri
 
-import kotlin.math.pow
-import kotlin.math.sqrt
-
 /**
  * Tracks and computes network coverage over a simulation area with temporal history.
  *
@@ -65,7 +62,7 @@ class AreaCoverage(private val x: Int, private val y: Int, private val radius: I
         val coverageIndex = time % history
 
         // Reset a coverageHistory when time advances
-        if (coverageIndex != previousCoverageIndex){
+        if (coverageIndex != previousCoverageIndex) {
             for (i in coverageHistory[coverageIndex].indices) {
                 for (j in coverageHistory[coverageIndex][i].indices) {
                     coverageHistory[coverageIndex][i][j] = false
@@ -154,8 +151,8 @@ class AreaCoverage(private val x: Int, private val y: Int, private val radius: I
         var trueCount = 0
         for (i in 0 until x) {
             for (j in 0 until y) {
-                for(h in 0 until history){
-                    if (coverageHistory[h][i][j]){
+                for (h in 0 until history) {
+                    if (coverageHistory[h][i][j]) {
                         trueCount++
                         break
                     }
@@ -167,4 +164,3 @@ class AreaCoverage(private val x: Int, private val y: Int, private val radius: I
         return (trueCount.toDouble() / (x * y)) * 100
     }
 }
-

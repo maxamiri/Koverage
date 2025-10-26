@@ -13,8 +13,7 @@ import kotlin.random.Random
  * simulation area, travels to it at a randomly chosen speed, and optionally pauses
  * for a specified wait time before selecting the next waypoint.
  *
- * This implements the classic Random Waypoint model from:
- * Bettstetter, C., Hartenstein, H., & Pérez-Costa, X. (2001).
+ * This implements the classic Random Waypoint model.
  *
  * @property area The simulation area boundaries.
  * @property tripMinSpeed Minimum travel speed in meters per second.
@@ -27,7 +26,7 @@ class RandomWaypoint(
     private val tripMinSpeed: Double,
     private val tripMaxSpeed: Double,
     private val waitTime: Int,
-    random: Random
+    random: Random,
 ) : MobilityModel(area, random) {
     private var target: Point? = null
     private var remainingTripTime = 0
@@ -75,7 +74,7 @@ class RandomWaypoint(
     /**
      * Generates a random point within the simulation area.
      *
-     * @return A new [Point] with random coordinates within the area boundaries.
+     * @return A new Point with random coordinates within the area boundaries.
      */
     private fun generateRandomPoint(): Point {
         val x = random.nextDouble(area.width.toDouble())

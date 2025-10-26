@@ -3,7 +3,9 @@
 
 package io.github.maxamiri
 
-import kotlin.math.*
+import kotlin.math.cos
+import kotlin.math.exp
+import kotlin.math.sin
 import kotlin.random.Random
 
 /**
@@ -33,7 +35,7 @@ class Enterprise(
     private val tripMinSpeed: Double,
     private val tripMaxSpeed: Double,
     private val waitTime: Int,
-    random: Random
+    random: Random,
 ) : MobilityModel(area, random) {
 
     /**
@@ -53,7 +55,7 @@ class Enterprise(
         val max: Int,
         val range: List<Int>,
         val a: Double,
-        val b: Double
+        val b: Double,
     ) {
         /**
          * Normalized probability values for each element in [range].
@@ -63,7 +65,7 @@ class Enterprise(
         /**
          * Normalization constant for the exponential distribution.
          */
-        var normalise:Double
+        var normalise: Double
 
         init {
             normalise = range.sumOf { x -> exponential(a, b, x.toDouble()) }
@@ -115,26 +117,26 @@ class Enterprise(
 
         // Update position
         car.position.x += speedX
-        if(car.position.x<0) {
+        if (car.position.x < 0) {
             car.position.x *= -1
-            direction = (direction+180) % 360
+            direction = (direction + 180) % 360
             calculateSpeedComponents()
         }
-        if(car.position.x>area.width) {
-            car.position.x = 2*area.width - car.position.x
-            direction = (direction+180) % 360
+        if (car.position.x > area.width) {
+            car.position.x = 2 * area.width - car.position.x
+            direction = (direction + 180) % 360
             calculateSpeedComponents()
         }
 
         car.position.y += speedY
-        if(car.position.y<0) {
+        if (car.position.y < 0) {
             car.position.y *= -1
-            direction = (direction+180) % 360
+            direction = (direction + 180) % 360
             calculateSpeedComponents()
         }
-        if(car.position.y>area.height) {
-            car.position.y = 2*area.height - car.position.y
-            direction = (direction+180) % 360
+        if (car.position.y > area.height) {
+            car.position.y = 2 * area.height - car.position.y
+            direction = (direction + 180) % 360
             calculateSpeedComponents()
         }
 
@@ -150,30 +152,30 @@ class Enterprise(
             // Apply proposed changes considering previous values
             if (proposedSpeedChange == 0) {
                 previousSpeedSign = 0
-            } else if ( previousSpeedSign == 0) {
+            } else if (previousSpeedSign == 0) {
                 previousSpeedSign = if (random.nextBoolean()) 1 else -1
             }
 
             speed += (proposedSpeedChange * previousSpeedSign)
-            //println("speed:$speed += (proposedSpeedChange: $proposedSpeedChange * previousSpeedSign: $previousSpeedSign)")
+            // println("speed:$speed += (proposedSpeedChange: $proposedSpeedChange * previousSpeedSign: $previousSpeedSign)")
 
             // Adjust speed to desired range
-            if (speed< tripMinSpeed) speed = tripMinSpeed.toInt()
-            if (speed> tripMaxSpeed) speed = tripMaxSpeed.toInt()
+            if (speed < tripMinSpeed) speed = tripMinSpeed.toInt()
+            if (speed > tripMaxSpeed) speed = tripMaxSpeed.toInt()
 
             if (proposedDirectionChange == 0) {
                 previousDirectionSign = 0
-            } else if ( previousDirectionSign == 0) {
+            } else if (previousDirectionSign == 0) {
                 previousDirectionSign = if (random.nextBoolean()) 1 else -1
             }
 
             direction += (proposedDirectionChange * previousDirectionSign)
 
-            //println("direction:$direction += (proposedDirectionChange:$proposedDirectionChange * previousDirectionSign:$previousDirectionSign)")
+            // println("direction:$direction += (proposedDirectionChange:$proposedDirectionChange * previousDirectionSign:$previousDirectionSign)")
 
             calculateSpeedComponents()
 
-            //println("Final speed:$speed")
+            // println("Final speed:$speed")
         }
     }
 
@@ -225,8 +227,8 @@ class Enterprise(
      * @param x Speed in km/h.
      * @return Speed in m/s.
      */
-    private fun kmh2mps(x:Int) =
-        (x/3.6).toInt()
+    private fun kmh2mps(x: Int) =
+        (x / 3.6).toInt()
 
     /**
      * Converts meters per second to kilometers per hour.
@@ -234,8 +236,8 @@ class Enterprise(
      * @param x Speed in m/s.
      * @return Speed in km/h.
      */
-    private fun mps2kmh(x:Int) =
-        (x*3.6).toInt()
+    private fun mps2kmh(x: Int) =
+        (x * 3.6).toInt()
 
     /**
      * Speed change distribution parameters for different speed classes.
@@ -247,7 +249,7 @@ class Enterprise(
         ClassParams(0, 20, (0..80).toList(), 0.7186, 0.0999),
         ClassParams(20, 40, (0..80).toList(), 0.7443, 0.0999),
         ClassParams(40, 60, (0..80).toList(), 0.5538, 0.0896),
-        ClassParams(60, 100, (0..80).toList(), 0.5937, 0.0999)
+        ClassParams(60, 100, (0..80).toList(), 0.5937, 0.0999),
     )
 
     /**
@@ -260,7 +262,7 @@ class Enterprise(
         ClassParams(0, 20, (0..180).toList(), 0.3679, 0.0647),
         ClassParams(20, 40, (0..180).toList(), 0.5312, 0.0982),
         ClassParams(40, 60, (0..180).toList(), 0.7148, 0.0999),
-        ClassParams(60, 100, (0..180).toList(), 0.7830, 0.0999)
+        ClassParams(60, 100, (0..180).toList(), 0.7830, 0.0999),
     )
 
     /**
@@ -295,4 +297,3 @@ class Enterprise(
         return selectedClassParams.range[selectedIndex]
     }
 }
-
